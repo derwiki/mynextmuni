@@ -8,6 +8,7 @@ gem 'rails', '3.2.3'
 gem 'sqlite3'
 
 gem 'json'
+gem 'nokogiri'
 
 # Gems used only for assets and not required
 # in production environments by default.
@@ -37,3 +38,9 @@ gem 'jquery-rails'
 
 # To use debugger
 # gem 'ruby-debug'
+
+# Heroku dependencies
+group :production do
+  gem 'pg'
+  gem 'thin'
+end
