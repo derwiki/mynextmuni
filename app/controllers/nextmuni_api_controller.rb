@@ -5,7 +5,7 @@ NEXTMUNI_API_BASE = 'http://webservices.nextbus.com/service/publicXMLFeed?comman
 class NextmuniApiController < ApplicationController
   def get
     url = "#{NEXTMUNI_API_BASE + params[:route]}"
-    predictions = Nokogiri::HTML(open(url)).css('prediction').map do |prediction|
+    predictions = Nokogiri::HTML(open(url)).css('prediction')[0..2].map do |prediction|
       seconds_to_display(prediction.attr('seconds').to_i)
     end
     render :json => predictions, :template => nil
