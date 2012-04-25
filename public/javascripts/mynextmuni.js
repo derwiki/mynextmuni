@@ -7,7 +7,7 @@ $.urlParam = function(name, querystring){
 
 var routes;
 $(function() {
-  var base = '/nextmuni_api/';
+  var NEXTMUNI_API_BASE = 'http://webservices.nextbus.com/service/publicXMLFeed?command=predictions&a=sf-muni&';
   routes = {
     'Mission Cliffs': [
       {route: 'r=27&d=27_IB1&s=3737&ts=3735', stop: '27 @ 19th/Bryant'},
@@ -26,10 +26,8 @@ $(function() {
 
   for (var key in routes) {
     var locations = routes[key];
-    console.log(locations);
     var locHTML = $('<div>' + key + '</div>');
     $.each(locations, function(idx, loc) {
-      console.log('loc.each entry (loc, key): ', loc, key);
       locHTML.append($('<div id="' + row_id(loc) + '">' + loc['stop'] + ': '));
     });
     $('body').append(locHTML);
@@ -40,6 +38,14 @@ $(function() {
 	  return $.urlParam(k, '?' + loc['route']);
     }).join("_");
   }
+  
+  function seconds_to_display(seconds) {
+    var minutes = Math.floor(seconds / 60);
+    var seconds = seconds % 60;
+    return ["<span class='time'><span class='minutes'>", minutes,
+            "</span> min and <span class='seconds'>", seconds,
+            "</span> seconds</span>"].join('');
+  }
 
   var requests = 0;
   $.each(routes, function(idx, loc) {
@@ -47,11 +53,15 @@ $(function() {
       requests++;
       $.ajax({
         'type': 'GET',
-        'url': base + loc['route'],
-        'dataType': 'json',
-        'success': function(predictions) {
-          loc['prediction'] = predictions.join(', ');
-          $('#' + row_id(loc)).text(loc['stop'] + ': ' + loc['prediction']);
+        'url': NEXTMUNI_API_BASE + loc['route'],
+        'dataType': 'xml',
+        'success': function(xml) {
+          var predictions = $(xml).find('prediction').slice(0, 2);
+          var formatted_predictions = $.map(predictions, function(p) {
+            return seconds_to_display($(p).attr('seconds'));
+          });
+          loc['prediction'] = formatted_predictions.join(', ');
+          $('#' + row_id(loc)).html(loc['stop'] + ': ' + loc['prediction']);
         }
       });
     });

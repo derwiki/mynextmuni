@@ -1,7 +1,6 @@
 Mynextmuni::Application.routes.draw do
   # The priority is based upon order of creation:
   # first created -> highest priority.
-  match 'nextmuni_api/:route' => 'nextmuni_api#get'
 
   # Sample of regular route:
   #   match 'products/:id' => 'catalog#view'
