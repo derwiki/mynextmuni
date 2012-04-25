@@ -1,3 +1,10 @@
+// http://stackoverflow.com/questions/901115/get-query-string-values-in-javascript
+$.urlParam = function(name, querystring){
+    var results = new RegExp('[\\?&]' + name + '=([^&#]*)').exec(querystring);
+    if (!results) { return 0; }
+    return results[1] || 0;
+}
+
 var routes;
 $(function() {
   var base = '/nextmuni_api/';
@@ -17,30 +24,34 @@ $(function() {
       {route: 'r=12&d=12_OB1&s=5841&ts=5857', stop: '12 @ Pacific/Jones'}]
   }
 
-  function renderResults() {
-    for (var key in routes) {
-      var loc = routes[key];
-      document.write(key + '<br>');
-      $.each(loc, function(idx, route) {
-        document.write([route['stop'], route['prediction']].join(': ') + '<br>');
-      });
-    }
+  for (var key in routes) {
+    var locations = routes[key];
+    console.log(locations);
+    var locHTML = $('<div>' + key + '</div>');
+    $.each(locations, function(idx, loc) {
+      console.log('loc.each entry (loc, key): ', loc, key);
+      locHTML.append($('<div id="' + row_id(loc) + '">' + loc['stop'] + ': '));
+    });
+    $('body').append(locHTML);
+  }
+
+  function row_id(loc) { 
+	return $.map(['r', 'd', 's', 'ts'], function(k) {
+	  return $.urlParam(k, '?' + loc['route']);
+    }).join("_");
   }
 
   var requests = 0;
   $.each(routes, function(idx, loc) {
-    $.each(loc, function(idx, route) {
+    $.each(loc, function(idx, loc) {
       requests++;
       $.ajax({
         'type': 'GET',
-        'url': base + route['route'],
+        'url': base + loc['route'],
         'dataType': 'json',
         'success': function(predictions) {
-          route['prediction'] = predictions.join(', ');
-          requests--;
-          if (requests === 0) {
-            renderResults();
-          }
+          loc['prediction'] = predictions.join(', ');
+          $('#' + row_id(loc)).text(loc['stop'] + ': ' + loc['prediction']);
         }
       });
     });
