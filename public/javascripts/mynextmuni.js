@@ -50,39 +50,28 @@ $(function() {
             "</span> seconds</span>"].join('');
   }
 
-  $.each(routes, function(idx, loc) {
-    $.each(loc, function(idx, loc) {
-      $.ajax({
-        'type': 'GET',
-        'url': NEXTMUNI_API_BASE + loc['route'],
-        'dataType': 'xml',
-        'success': function(xml) {
-          var predictions = $(xml).find('prediction').slice(0, 2);
-          var formatted_predictions = $.map(predictions, function(p) {
-            return seconds_to_display($(p).attr('seconds'));
-          });
-          loc['prediction'] = formatted_predictions.join(', ');
-          $('#' + row_id(loc)).html(loc['stop'] + ': ' + loc['prediction']);
-        }
-      });
-    });
-  });
+  function refreshPrediction(route) {
+    $.ajax({
+      'type': 'GET',
+      'url': NEXTMUNI_API_BASE + route['route'],
+      'dataType': 'xml',
+      'success': function(xml) {
+        var predictions = $(xml).find('prediction').slice(0, 2);
+        var formatted_predictions = $.map(predictions, function(p) {
+          return seconds_to_display($(p).attr('seconds'));
+        });
+        route['prediction'] = formatted_predictions.join(', ');
+        $('#' + row_id(route)).html(route['stop'] + ': ' + route['prediction']);
 
-  // 'realtime' updating
-  setInterval(function() {
-    $('.time').each(function(idx, timespan) {
-      var seconds = $(timespan).find('.seconds');
-      if (parseInt(seconds.text()) == 0) {
-        var minutes = $(timespan).find('.minutes');
-        if (parseInt(minutes.text()) == 0) {
-          $(timespan).remove();
-        } else {
-          minutes.text(parseInt(minutes.text()) - 1);
-          seconds.text('59');
-       }
-      } else {
-        seconds.text(parseInt(seconds.text()) - 1);
+        var randomDelay = Math.floor(Math.random()*3) * 1000; // msec
+        setInterval(function() { refreshPrediction(route); }, randomDelay);
       }
     });
-  }, 1000);
+  }
+
+  $.each(routes, function(idx, loc) {
+    $.each(loc, function(idx, route) {
+      refreshPrediction(route);
+    });
+  });
 });
