@@ -12,32 +12,53 @@ $(function() {
       hours = d.getHours();
   $('#pageRenderInfo span').text([hours, minutes, seconds].join(':'));
   var NEXTMUNI_API_BASE = 'http://webservices.nextbus.com/service/publicXMLFeed?command=predictions&a=sf-muni&';
-  var routes = {
-    'Mission Cliffs to Work': [
-      {route: 'r=27&d=27_IB1&s=3737&ts=3735', stop: '27 @ 19th/Bryant'},
-      {route: 'r=12&d=12_IB1&s=4671&ts=4668', stop: '12 @ 18th/Folsom'},
-      {route: 'r=14&d=14_IB1&s=7666&ts=5551', stop: '14 @ 18th/S.Van Ness'}],
-    'Work to Home': [
-      {route: 'r=30&d=30_OB3&s=4821&ts=6596', stop: '30 @ Kearny/Geary'},
-      {route: 'r=45&d=45_OB2&s=4821&ts=6596', stop: '45 @ Kearny/Geary'},
-      {route: 'r=1&d=01_OB09&s=6316&ts=6312', stop: '1 @ Stockton/California'},
-      {route: 'r=12&d=12_IB1&s=7549&ts=7550', stop: '12 @ 2nd/Stevenson'},
-      {route: 'r=10&d=10_IB1&s=7549&ts=7550', stop: '10 @ 2nd/Stevenson'}],
-    'Home to Work': [
-      {route: 'r=30&d=30_IB1&s=6521&ts=6526', stop: '30 @ Pacific/Stockton'},
-      {route: 'r=45&d=45_IB2&s=6521&ts=6526', stop: '45 @ Pacific/Stockton'}],
-    'Home to Mission Cliffs': [
-      {route: 'r=27&d=27_OB2&s=6919&ts=5068', stop: '27 @ Washington/Hyde'},
-      {route: 'r=12&d=12_OB1&s=5841&ts=5857', stop: '12 @ Pacific/Jones'}]
-  }
 
+  var routes = routes();
   for (var key in routes) {
     var locations = routes[key];
-    var locHTML = $('<div><strong>' + key + '</strong></div>');
+    var locHTML = $('<div class="route"><strong>' + key + '</strong></div>');
+    locHTML.click(function(ev) {
+      ev.target.children().toggle();
+      $.each(locations, function(idx, loc) { loc.hidden = true; });
+    });
     $.each(locations, function(idx, loc) {
       locHTML.append($('<div id="' + rowId(loc) + '">' + loc['stop'] + ': '));
     });
     $('body').append(locHTML);
+  }
+
+  function routes() {
+    if (typeof(localStorage) !== 'undefined' ) {
+      var localRoutes = localStorage.getItem('routes');
+      if (localRoutes) {
+        console.log('using localStorage to load routes');
+        return JSON.parse(localRoutes);
+      }
+    }
+
+    var routes = {
+      'Mission Cliffs to Work': [
+        {route: 'r=27&d=27_IB1&s=3737&ts=3735', stop: '27 @ 19th/Bryant'},
+        {route: 'r=12&d=12_IB1&s=4671&ts=4668', stop: '12 @ 18th/Folsom'},
+        {route: 'r=14&d=14_IB1&s=7666&ts=5551', stop: '14 @ 18th/S.Van Ness'}],
+      'Work to Home': [
+        {route: 'r=30&d=30_OB3&s=4821&ts=6596', stop: '30 @ Kearny/Geary'},
+        {route: 'r=45&d=45_OB2&s=4821&ts=6596', stop: '45 @ Kearny/Geary'},
+        {route: 'r=1&d=01_OB09&s=6316&ts=6312', stop: '1 @ Stockton/California'},
+        {route: 'r=12&d=12_IB1&s=7549&ts=7550', stop: '12 @ 2nd/Stevenson'},
+        {route: 'r=10&d=10_IB1&s=7549&ts=7550', stop: '10 @ 2nd/Stevenson'}],
+      'Home to Work': [
+        {route: 'r=30&d=30_IB1&s=6521&ts=6526', stop: '30 @ Pacific/Stockton'},
+        {route: 'r=45&d=45_IB2&s=6521&ts=6526', stop: '45 @ Pacific/Stockton'}],
+      'Home to Mission Cliffs': [
+        {route: 'r=27&d=27_OB2&s=6919&ts=5068', stop: '27 @ Washington/Hyde'},
+        {route: 'r=12&d=12_OB1&s=5841&ts=5857', stop: '12 @ Pacific/Jones'}]
+    };
+    if (typeof(localStorage) !== 'undefined' ) {
+      localStorage.setItem('routes', JSON.stringify(routes));
+      console.log("updated routes");
+    }
+    return routes;
   }
 
   function rowId(route) {
@@ -45,7 +66,7 @@ $(function() {
 	  return $.urlParam(k, '?' + route['route']);
     }).join("_");
   }
-  
+
   function secondsToDisplay(seconds) {
     var minutes = Math.floor(seconds / 60);
     var seconds = seconds % 60;
