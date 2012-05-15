@@ -18,11 +18,11 @@ $(function() {
     var locations = routes[key];
     var locHTML = $('<div class="route"><strong>' + key + '</strong></div>');
     locHTML.click(function(ev) {
-      ev.target.children().toggle();
-      $.each(locations, function(idx, loc) { loc.hidden = true; });
+      var routeDiv = $(ev.target).closest('div.route');
+      routeDiv.children('div').toggleClass('hidden');
     });
     $.each(locations, function(idx, loc) {
-      locHTML.append($('<div id="' + rowId(loc) + '">' + loc['stop'] + ': '));
+      locHTML.append($('<div class="hidden" id="' + rowId(loc) + '">' + loc['stop'] + ': '));
     });
     $('body').append(locHTML);
   }
@@ -31,7 +31,6 @@ $(function() {
     if (typeof(localStorage) !== 'undefined' ) {
       var localRoutes = localStorage.getItem('routes');
       if (localRoutes) {
-        console.log('using localStorage to load routes');
         return JSON.parse(localRoutes);
       }
     }
@@ -49,21 +48,22 @@ $(function() {
         {route: 'r=10&d=10_IB1&s=7549&ts=7550', stop: '10 @ 2nd/Stevenson'}],
       'Home to Work': [
         {route: 'r=30&d=30_IB1&s=6521&ts=6526', stop: '30 @ Pacific/Stockton'},
-        {route: 'r=45&d=45_IB2&s=6521&ts=6526', stop: '45 @ Pacific/Stockton'}],
+        {route: 'r=45&d=45_IB2&s=6521&ts=6526', stop: '45 @ Pacific/Stockton'},
+        {route: 'r=12&d=12_OB1&s=5841&ts=5857', stop: '12 @ Pacific/Jones'},
+        {route: 'r=10&d=10_OB1&s=5841&ts=5857', stop: '10 @ Pacific/Jones'}],
       'Home to Mission Cliffs': [
         {route: 'r=27&d=27_OB2&s=6919&ts=5068', stop: '27 @ Washington/Hyde'},
         {route: 'r=12&d=12_OB1&s=5841&ts=5857', stop: '12 @ Pacific/Jones'}]
     };
     if (typeof(localStorage) !== 'undefined' ) {
       localStorage.setItem('routes', JSON.stringify(routes));
-      console.log("updated routes");
     }
     return routes;
   }
 
   function rowId(route) {
-	return $.map(['r', 'd', 's', 'ts'], function(k) {
-	  return $.urlParam(k, '?' + route['route']);
+    return $.map(['r', 'd', 's', 'ts'], function(k) {
+      return $.urlParam(k, '?' + route['route']);
     }).join("_");
   }
 
@@ -76,6 +76,13 @@ $(function() {
   }
 
   function refreshPrediction(route) {
+    // only refresh route if visible
+    if ($('#' + rowId(route)).hasClass('hidden')) {
+      var randomDelay = Math.floor(Math.random()*30) * 1000; // msec
+      setInterval(function() { refreshPrediction(route); }, randomDelay);
+      return;
+    }
+
     $.ajax({
       'type': 'GET',
       'url': NEXTMUNI_API_BASE + route['route'],
@@ -88,7 +95,7 @@ $(function() {
         route['prediction'] = formatted_predictions.join(', ');
         $('#' + rowId(route)).html(route['stop'] + ': ' + route['prediction']);
 
-        var randomDelay = Math.floor(Math.random()*3) * 1000; // msec
+        var randomDelay = Math.floor(Math.random()*30) * 1000; // msec
         setInterval(function() { refreshPrediction(route); }, randomDelay);
       }
     });
